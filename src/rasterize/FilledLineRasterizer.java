@@ -3,14 +3,20 @@ package rasterize;
 /**
  * Implementace rasterizace úsečky pomocí Bresenhamova algoritmu.
  *
+ * Algoritmus: Bresenhamův algoritmus pro rasterizaci úseček
+ * Princip: Používá pouze celočíselnou aritmetiku pro výpočet pixelů
+ *
  * Výhody:
- * - Používá pouze celočíselnou aritmetiku (rychlé)
- * - Žádné dělení ani násobení s plovoucí čárkou
- * - Vysoká přesnost pro všechny směry
+ * - Rychlost - pouze celočíselné operace
+ * - Přesnost - minimalizuje chyby zaokrouhlování
+ * - Jednoduchá implementace
  *
  * Nevýhody:
- * - Složitější implementace než DDA
- * - Nutnost řešit všechny oktanty
+ * - Nutnost řešit všechny směry a oktanty
+ * - Složitější než DDA algoritmus
+ *
+ * Časová složitost: O(max(|dx|, |dy|))
+ * Paměťová složitost: O(1)
  */
 public class FilledLineRasterizer extends LineRasterizer {
 
