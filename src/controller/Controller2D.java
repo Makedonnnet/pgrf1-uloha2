@@ -2,10 +2,12 @@ package controller;
 
 import rasterize.FilledLineRasterizer;
 import rasterize.LineRasterizer;
+import rasterize.Point;
 import rasterize.Polygon;
 import rasterize.RasterBufferedImage;
 import view.Panel;
 
+import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
@@ -27,14 +29,17 @@ public class Controller2D {
     private int currentColor1 = 0xff0000; // Červená
     private int currentColor2 = 0x0000ff; // Modrá
 
-    // NOVÉ: Proměnné pro editaci vrcholů
-    private Polygon.Point selectedVertex = null; // Vybraný vrchol pro editaci
+    // Proměnné pro editaci vrcholů
+    private Point selectedVertex = null; // Vybraný vrchol pro editaci
     private boolean editing = false; // Režim editace
 
     public Controller2D(Panel panel) {
         this.panel = panel;
         this.raster = panel.getRaster();
         this.lineRasterizer = new FilledLineRasterizer(raster);
+
+        // Nastavit výchozí barvu na červenou
+        lineRasterizer.setColor(Color.RED);
 
         // Ujistíme se, že panel má focus pro klávesové události
         panel.setFocusable(true);
@@ -51,7 +56,7 @@ public class Controller2D {
                     if (e.isControlDown()) { // Ctrl + levé tlačítko - mazání vrcholů
                         System.out.println("Ctrl + levé tlačítko - pokus o mazání");
                         if (!drawing) {
-                            Polygon.Point vertexToDelete = findNearestVertex(e.getX(), e.getY());
+                            Point vertexToDelete = findNearestVertex(e.getX(), e.getY());
                             if (vertexToDelete != null) {
                                 polygon.getVertices().remove(vertexToDelete);
                                 raster.clear();
@@ -69,7 +74,7 @@ public class Controller2D {
                             int edgeIndex = findNearestEdge(e.getX(), e.getY());
                             if (edgeIndex != -1) {
                                 // Vložit nový vrchol na nalezenou hranu
-                                polygon.getVertices().add(edgeIndex, new Polygon.Point(e.getX(), e.getY()));
+                                polygon.getVertices().add(edgeIndex, new Point(e.getX(), e.getY()));
                                 raster.clear();
                                 drawPolygon();
                                 panel.repaint();
@@ -98,7 +103,7 @@ public class Controller2D {
 
                             if (shiftPressed) {
                                 // Režim s přichytáváním
-                                Polygon.Point snapped = getSnappedPoint(startX, startY, endX, endY);
+                                Point snapped = getSnappedPoint(startX, startY, endX, endY);
                                 endX = snapped.x;
                                 endY = snapped.y;
                             }
@@ -157,7 +162,7 @@ public class Controller2D {
                     int currentY = e.getY();
 
                     if (shiftPressed) {
-                        Polygon.Point snapped = getSnappedPoint(startX, startY, currentX, currentY);
+                        Point snapped = getSnappedPoint(startX, startY, currentX, currentY);
                         currentX = snapped.x;
                         currentY = snapped.y;
                     }
@@ -200,10 +205,28 @@ public class Controller2D {
                 }
 
                 if (e.getKeyCode() == KeyEvent.VK_G) {
-                    // Přepnutí režimu gradientu
+                    // Přepnutí režimu gradientu (G jako Gradient)
                     gradientMode = !gradientMode;
                     System.out.println("Gradient mode: " + (gradientMode ? "ON" : "OFF"));
                     panel.repaint();
+                }
+
+                // Výběr barev pro normální režim
+                if (e.getKeyCode() == KeyEvent.VK_R) {
+                    lineRasterizer.setColor(Color.RED);
+                    System.out.println("Color: RED");
+                }
+                if (e.getKeyCode() == KeyEvent.VK_B) {
+                    lineRasterizer.setColor(Color.BLUE);
+                    System.out.println("Color: BLUE");
+                }
+                if (e.getKeyCode() == KeyEvent.VK_Y) {
+                    lineRasterizer.setColor(Color.YELLOW);
+                    System.out.println("Color: YELLOW");
+                }
+                if (e.getKeyCode() == KeyEvent.VK_P) {
+                    lineRasterizer.setColor(Color.PINK);
+                    System.out.println("Color: PINK");
                 }
 
                 // Uzavření polygonu - např. mezerník
@@ -211,7 +234,7 @@ public class Controller2D {
                     closePolygon();
                 }
 
-                // NOVÉ: Mazání vybraného vrcholu - klávesa Delete nebo Backspace
+                // Mazání vybraného vrcholu - klávesa Delete nebo Backspace
                 if ((e.getKeyCode() == KeyEvent.VK_DELETE || e.getKeyCode() == KeyEvent.VK_BACK_SPACE) && selectedVertex != null) {
                     System.out.println("Delete/Backspace klávesa - pokus o mazání vybraného vrcholu");
                     polygon.getVertices().remove(selectedVertex);
@@ -234,7 +257,7 @@ public class Controller2D {
     }
 
     // Metoda pro přichytávání k osám (režim Shift)
-    private Polygon.Point getSnappedPoint(int startX, int startY, int endX, int endY) {
+    private Point getSnappedPoint(int startX, int startY, int endX, int endY) {
         int dx = endX - startX;
         int dy = endY - startY;
 
@@ -244,32 +267,32 @@ public class Controller2D {
 
         if (angle >= 337.5 || angle < 22.5) {
             // Vodorovný doprava
-            return new Polygon.Point(endX, startY);
+            return new Point(endX, startY);
         } else if (angle >= 22.5 && angle < 67.5) {
             // Diagonální ↗
             int dist = Math.min(Math.abs(dx), Math.abs(dy));
-            return new Polygon.Point(startX + dist, startY + dist);
+            return new Point(startX + dist, startY + dist);
         } else if (angle >= 67.5 && angle < 112.5) {
             // Svislý nahoru
-            return new Polygon.Point(startX, endY);
+            return new Point(startX, endY);
         } else if (angle >= 112.5 && angle < 157.5) {
             // Diagonální ↖
             int dist = Math.min(Math.abs(dx), Math.abs(dy));
-            return new Polygon.Point(startX - dist, startY + dist);
+            return new Point(startX - dist, startY + dist);
         } else if (angle >= 157.5 && angle < 202.5) {
             // Vodorovný doleva
-            return new Polygon.Point(endX, startY);
+            return new Point(endX, startY);
         } else if (angle >= 202.5 && angle < 247.5) {
             // Diagonální ↙
             int dist = Math.min(Math.abs(dx), Math.abs(dy));
-            return new Polygon.Point(startX - dist, startY - dist);
+            return new Point(startX - dist, startY - dist);
         } else if (angle >= 247.5 && angle < 292.5) {
             // Svislý dolů
-            return new Polygon.Point(startX, endY);
+            return new Point(startX, endY);
         } else {
             // Diagonální ↘
             int dist = Math.min(Math.abs(dx), Math.abs(dy));
-            return new Polygon.Point(startX + dist, startY - dist);
+            return new Point(startX + dist, startY - dist);
         }
     }
 
@@ -279,20 +302,20 @@ public class Controller2D {
      * @param y y-ová souřadnice
      * @return nejbližší vrchol nebo null
      */
-    private Polygon.Point findNearestVertex(int x, int y) {
+    private Point findNearestVertex(int x, int y) {
         if (polygon.isEmpty()) {
             System.out.println("Seznam vrcholů je prázdný");
             return null;
         }
 
-        Polygon.Point nearest = null;
+        Point nearest = null;
         double minDistance = Double.MAX_VALUE;
         int threshold = 15; // Zvýšený poloměr hledání v pixelech
 
         System.out.println("Hledám vrchol poblíž [" + x + ", " + y + "]");
         System.out.println("Počet vrcholů: " + polygon.size());
 
-        for (Polygon.Point vertex : polygon.getVertices()) {
+        for (Point vertex : polygon.getVertices()) {
             double distance = Math.sqrt(Math.pow(vertex.x - x, 2) + Math.pow(vertex.y - y, 2));
             System.out.println("Vrchol [" + vertex.x + ", " + vertex.y + "] - vzdálenost: " + distance);
 
@@ -328,8 +351,8 @@ public class Controller2D {
 
         // Procházíme všechny hrany polygonu
         for (int i = 0; i < polygon.size(); i++) {
-            Polygon.Point p1 = polygon.getVertices().get(i);
-            Polygon.Point p2 = polygon.getVertices().get((i + 1) % polygon.size()); // Uzavřený polygon
+            Point p1 = polygon.getVertices().get(i);
+            Point p2 = polygon.getVertices().get((i + 1) % polygon.size()); // Uzavřený polygon
 
             // Vzdálenost od bodu k úsečce
             double distance = pointToLineDistance(x, y, p1.x, p1.y, p2.x, p2.y);
@@ -384,13 +407,66 @@ public class Controller2D {
 
     // Metoda pro vykreslení čáry (s gradientem nebo bez)
     private void drawLine(int x1, int y1, int x2, int y2) {
-        if (gradientMode && lineRasterizer instanceof FilledLineRasterizer) {
-            // Režim s gradientem
-            ((FilledLineRasterizer) lineRasterizer).rasterizeWithGradient(
-                    x1, y1, currentColor1, x2, y2, currentColor2);
+        if (gradientMode) {
+            // Režim s gradientem - рисуем градиент вручную
+            drawGradientLine(x1, y1, x2, y2);
         } else {
             // Normální režim
             lineRasterizer.rasterize(x1, y1, x2, y2);
+        }
+    }
+
+    // Nová metoda pro kreslení gradientní čáry
+    private void drawGradientLine(int x1, int y1, int x2, int y2) {
+        // Ruční implementace Bresenham s gradientem
+        int dx = Math.abs(x2 - x1);
+        int dy = Math.abs(y2 - y1);
+
+        int sx = (x1 < x2) ? 1 : -1;
+        int sy = (y1 < y2) ? 1 : -1;
+
+        int err = dx - dy;
+
+        // Rozložení barev na RGB komponenty
+        int r1 = (currentColor1 >> 16) & 0xFF;
+        int g1 = (currentColor1 >> 8) & 0xFF;
+        int b1 = currentColor1 & 0xFF;
+
+        int r2 = (currentColor2 >> 16) & 0xFF;
+        int g2 = (currentColor2 >> 8) & 0xFF;
+        int b2 = currentColor2 & 0xFF;
+
+        double totalLength = Math.sqrt(dx * dx + dy * dy);
+        int x = x1;
+        int y = y1;
+
+        while (true) {
+            if (x >= 0 && x < raster.getWidth() && y >= 0 && y < raster.getHeight()) {
+                // Výpočet poměru pro interpolaci
+                double currentLength = Math.sqrt((x - x1) * (x - x1) + (y - y1) * (y - y1));
+                double ratio = (totalLength > 0) ? currentLength / totalLength : 0;
+                ratio = Math.max(0, Math.min(1, ratio));
+
+                // Lineární interpolace barev
+                int r = (int) (r1 + (r2 - r1) * ratio);
+                int g = (int) (g1 + (g2 - g1) * ratio);
+                int b = (int) (b1 + (b2 - b1) * ratio);
+
+                int color = (r << 16) | (g << 8) | b;
+                raster.setPixel(x, y, color);
+            }
+
+            if (x == x2 && y == y2) break;
+
+            int e2 = 2 * err;
+            if (e2 > -dy) {
+                err -= dy;
+                x += sx;
+            }
+            if (e2 < dx) {
+                err += dx;
+                y += sy;
+            }
         }
     }
 
@@ -399,15 +475,15 @@ public class Controller2D {
         if (polygon.size() < 2) return;
 
         for (int i = 0; i < polygon.size() - 1; i++) {
-            Polygon.Point p1 = polygon.getVertices().get(i);
-            Polygon.Point p2 = polygon.getVertices().get(i + 1);
+            Point p1 = polygon.getVertices().get(i);
+            Point p2 = polygon.getVertices().get(i + 1);
             drawLine(p1.x, p1.y, p2.x, p2.y);
         }
 
         // Pokud je polygon uzavřený, nakreslit poslední hranu
         if (polygon.size() > 2 && !drawing) {
-            Polygon.Point first = polygon.getVertices().get(0);
-            Polygon.Point last = polygon.getVertices().get(polygon.size() - 1);
+            Point first = polygon.getVertices().get(0);
+            Point last = polygon.getVertices().get(polygon.size() - 1);
             drawLine(last.x, last.y, first.x, first.y);
         }
     }
@@ -415,8 +491,8 @@ public class Controller2D {
     // Uzavření polygonu - spojení posledního s prvním bodem
     private void closePolygon() {
         if (polygon.size() > 2) {
-            Polygon.Point first = polygon.getVertices().get(0);
-            Polygon.Point last = polygon.getVertices().get(polygon.size() - 1);
+            Point first = polygon.getVertices().get(0);
+            Point last = polygon.getVertices().get(polygon.size() - 1);
             drawLine(last.x, last.y, first.x, first.y);
             panel.repaint();
             System.out.println("=== POLYGON UZAVŘEN ===");
