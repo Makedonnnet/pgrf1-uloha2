@@ -2,6 +2,7 @@ package controller;
 
 import rasterize.FilledLineRasterizer;
 import rasterize.LineRasterizer;
+import rasterize.Polygon;
 import rasterize.RasterBufferedImage;
 import view.Panel;
 
@@ -9,8 +10,6 @@ import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.List;
 
 public class Controller2D {
     private final Panel panel;
@@ -20,7 +19,7 @@ public class Controller2D {
     // Proměnné pro interaktivní kreslení
     private int startX, startY; // Počáteční bod úsečky
     private boolean drawing = false; // Režim kreslení
-    private List<Point> polygonVertices = new ArrayList<>(); // Vrcholy polygonu
+    private Polygon polygon = new Polygon(); // Vrcholy polygonu
     private boolean shiftPressed = false; // Režim přichytávání
 
     // Proměnné pro gradient
@@ -29,17 +28,8 @@ public class Controller2D {
     private int currentColor2 = 0x0000ff; // Modrá
 
     // NOVÉ: Proměnné pro editaci vrcholů
-    private Point selectedVertex = null; // Vybraný vrchol pro editaci
+    private Polygon.Point selectedVertex = null; // Vybraný vrchol pro editaci
     private boolean editing = false; // Režim editace
-
-    // Třída pro reprezentaci bodu
-    private static class Point {
-        int x, y;
-        Point(int x, int y) {
-            this.x = x;
-            this.y = y;
-        }
-    }
 
     public Controller2D(Panel panel) {
         this.panel = panel;
@@ -61,9 +51,9 @@ public class Controller2D {
                     if (e.isControlDown()) { // Ctrl + levé tlačítko - mazání vrcholů
                         System.out.println("Ctrl + levé tlačítko - pokus o mazání");
                         if (!drawing) {
-                            Point vertexToDelete = findNearestVertex(e.getX(), e.getY());
+                            Polygon.Point vertexToDelete = findNearestVertex(e.getX(), e.getY());
                             if (vertexToDelete != null) {
-                                polygonVertices.remove(vertexToDelete);
+                                polygon.getVertices().remove(vertexToDelete);
                                 raster.clear();
                                 drawPolygon();
                                 panel.repaint();
@@ -79,12 +69,12 @@ public class Controller2D {
                             int edgeIndex = findNearestEdge(e.getX(), e.getY());
                             if (edgeIndex != -1) {
                                 // Vložit nový vrchol na nalezenou hranu
-                                polygonVertices.add(edgeIndex, new Point(e.getX(), e.getY()));
+                                polygon.getVertices().add(edgeIndex, new Polygon.Point(e.getX(), e.getY()));
                                 raster.clear();
                                 drawPolygon();
                                 panel.repaint();
                                 System.out.println("=== Nový vrchol přidán na hranu: [" + e.getX() + ", " + e.getY() + "] ===");
-                                System.out.println("Nový počet vrcholů: " + polygonVertices.size());
+                                System.out.println("Nový počet vrcholů: " + polygon.size());
                             } else {
                                 System.out.println("Žádná hrana nebyla nalezena v dosahu");
                             }
@@ -98,9 +88,9 @@ public class Controller2D {
                             drawing = true;
 
                             // Přidat vrchol do polygonu
-                            polygonVertices.add(new Point(startX, startY));
+                            polygon.addVertex(startX, startY);
                             System.out.println("=== PŘIDÁN PRVNÍ VRCHOL: [" + startX + ", " + startY + "] ===");
-                            System.out.println("Počet vrcholů: " + polygonVertices.size());
+                            System.out.println("Počet vrcholů: " + polygon.size());
                         } else if (drawing && !editing) {
                             // Konec kreslení - potvrdit úsečku
                             int endX = e.getX();
@@ -108,7 +98,7 @@ public class Controller2D {
 
                             if (shiftPressed) {
                                 // Režim s přichytáváním
-                                Point snapped = getSnappedPoint(startX, startY, endX, endY);
+                                Polygon.Point snapped = getSnappedPoint(startX, startY, endX, endY);
                                 endX = snapped.x;
                                 endY = snapped.y;
                             }
@@ -117,9 +107,9 @@ public class Controller2D {
                             drawLine(startX, startY, endX, endY);
 
                             // Přidat další vrchol polygonu
-                            polygonVertices.add(new Point(endX, endY));
+                            polygon.addVertex(endX, endY);
                             System.out.println("=== PŘIDÁN DALŠÍ VRCHOL: [" + endX + ", " + endY + "] ===");
-                            System.out.println("Počet vrcholů: " + polygonVertices.size());
+                            System.out.println("Počet vrcholů: " + polygon.size());
 
                             // Připravit se na další úsečku
                             startX = endX;
@@ -167,7 +157,7 @@ public class Controller2D {
                     int currentY = e.getY();
 
                     if (shiftPressed) {
-                        Point snapped = getSnappedPoint(startX, startY, currentX, currentY);
+                        Polygon.Point snapped = getSnappedPoint(startX, startY, currentX, currentY);
                         currentX = snapped.x;
                         currentY = snapped.y;
                     }
@@ -217,14 +207,14 @@ public class Controller2D {
                 }
 
                 // Uzavření polygonu - např. mezerník
-                if (e.getKeyCode() == KeyEvent.VK_SPACE && polygonVertices.size() > 2) {
+                if (e.getKeyCode() == KeyEvent.VK_SPACE && polygon.size() > 2) {
                     closePolygon();
                 }
 
                 // NOVÉ: Mazání vybraného vrcholu - klávesa Delete nebo Backspace
                 if ((e.getKeyCode() == KeyEvent.VK_DELETE || e.getKeyCode() == KeyEvent.VK_BACK_SPACE) && selectedVertex != null) {
                     System.out.println("Delete/Backspace klávesa - pokus o mazání vybraného vrcholu");
-                    polygonVertices.remove(selectedVertex);
+                    polygon.getVertices().remove(selectedVertex);
                     raster.clear();
                     drawPolygon();
                     panel.repaint();
@@ -244,7 +234,7 @@ public class Controller2D {
     }
 
     // Metoda pro přichytávání k osám (režim Shift)
-    private Point getSnappedPoint(int startX, int startY, int endX, int endY) {
+    private Polygon.Point getSnappedPoint(int startX, int startY, int endX, int endY) {
         int dx = endX - startX;
         int dy = endY - startY;
 
@@ -254,32 +244,32 @@ public class Controller2D {
 
         if (angle >= 337.5 || angle < 22.5) {
             // Vodorovný doprava
-            return new Point(endX, startY);
+            return new Polygon.Point(endX, startY);
         } else if (angle >= 22.5 && angle < 67.5) {
             // Diagonální ↗
             int dist = Math.min(Math.abs(dx), Math.abs(dy));
-            return new Point(startX + dist, startY + dist);
+            return new Polygon.Point(startX + dist, startY + dist);
         } else if (angle >= 67.5 && angle < 112.5) {
             // Svislý nahoru
-            return new Point(startX, endY);
+            return new Polygon.Point(startX, endY);
         } else if (angle >= 112.5 && angle < 157.5) {
             // Diagonální ↖
             int dist = Math.min(Math.abs(dx), Math.abs(dy));
-            return new Point(startX - dist, startY + dist);
+            return new Polygon.Point(startX - dist, startY + dist);
         } else if (angle >= 157.5 && angle < 202.5) {
             // Vodorovný doleva
-            return new Point(endX, startY);
+            return new Polygon.Point(endX, startY);
         } else if (angle >= 202.5 && angle < 247.5) {
             // Diagonální ↙
             int dist = Math.min(Math.abs(dx), Math.abs(dy));
-            return new Point(startX - dist, startY - dist);
+            return new Polygon.Point(startX - dist, startY - dist);
         } else if (angle >= 247.5 && angle < 292.5) {
             // Svislý dolů
-            return new Point(startX, endY);
+            return new Polygon.Point(startX, endY);
         } else {
             // Diagonální ↘
             int dist = Math.min(Math.abs(dx), Math.abs(dy));
-            return new Point(startX + dist, startY - dist);
+            return new Polygon.Point(startX + dist, startY - dist);
         }
     }
 
@@ -289,20 +279,20 @@ public class Controller2D {
      * @param y y-ová souřadnice
      * @return nejbližší vrchol nebo null
      */
-    private Point findNearestVertex(int x, int y) {
-        if (polygonVertices.isEmpty()) {
+    private Polygon.Point findNearestVertex(int x, int y) {
+        if (polygon.isEmpty()) {
             System.out.println("Seznam vrcholů je prázdný");
             return null;
         }
 
-        Point nearest = null;
+        Polygon.Point nearest = null;
         double minDistance = Double.MAX_VALUE;
         int threshold = 15; // Zvýšený poloměr hledání v pixelech
 
         System.out.println("Hledám vrchol poblíž [" + x + ", " + y + "]");
-        System.out.println("Počet vrcholů: " + polygonVertices.size());
+        System.out.println("Počet vrcholů: " + polygon.size());
 
-        for (Point vertex : polygonVertices) {
+        for (Polygon.Point vertex : polygon.getVertices()) {
             double distance = Math.sqrt(Math.pow(vertex.x - x, 2) + Math.pow(vertex.y - y, 2));
             System.out.println("Vrchol [" + vertex.x + ", " + vertex.y + "] - vzdálenost: " + distance);
 
@@ -328,7 +318,7 @@ public class Controller2D {
      * @return index pro vložení nového vrcholu nebo -1 pokud není nalezena hrana
      */
     private int findNearestEdge(int x, int y) {
-        if (polygonVertices.size() < 2) return -1;
+        if (polygon.size() < 2) return -1;
 
         int nearestEdgeIndex = -1;
         double minDistance = Double.MAX_VALUE;
@@ -337,9 +327,9 @@ public class Controller2D {
         System.out.println("Hledám hranu poblíž [" + x + ", " + y + "]");
 
         // Procházíme všechny hrany polygonu
-        for (int i = 0; i < polygonVertices.size(); i++) {
-            Point p1 = polygonVertices.get(i);
-            Point p2 = polygonVertices.get((i + 1) % polygonVertices.size()); // Uzavřený polygon
+        for (int i = 0; i < polygon.size(); i++) {
+            Polygon.Point p1 = polygon.getVertices().get(i);
+            Polygon.Point p2 = polygon.getVertices().get((i + 1) % polygon.size()); // Uzavřený polygon
 
             // Vzdálenost od bodu k úsečce
             double distance = pointToLineDistance(x, y, p1.x, p1.y, p2.x, p2.y);
@@ -406,31 +396,31 @@ public class Controller2D {
 
     // Vykreslení celého polygonu
     private void drawPolygon() {
-        if (polygonVertices.size() < 2) return;
+        if (polygon.size() < 2) return;
 
-        for (int i = 0; i < polygonVertices.size() - 1; i++) {
-            Point p1 = polygonVertices.get(i);
-            Point p2 = polygonVertices.get(i + 1);
+        for (int i = 0; i < polygon.size() - 1; i++) {
+            Polygon.Point p1 = polygon.getVertices().get(i);
+            Polygon.Point p2 = polygon.getVertices().get(i + 1);
             drawLine(p1.x, p1.y, p2.x, p2.y);
         }
 
         // Pokud je polygon uzavřený, nakreslit poslední hranu
-        if (polygonVertices.size() > 2 && !drawing) {
-            Point first = polygonVertices.get(0);
-            Point last = polygonVertices.get(polygonVertices.size() - 1);
+        if (polygon.size() > 2 && !drawing) {
+            Polygon.Point first = polygon.getVertices().get(0);
+            Polygon.Point last = polygon.getVertices().get(polygon.size() - 1);
             drawLine(last.x, last.y, first.x, first.y);
         }
     }
 
     // Uzavření polygonu - spojení posledního s prvním bodem
     private void closePolygon() {
-        if (polygonVertices.size() > 2) {
-            Point first = polygonVertices.get(0);
-            Point last = polygonVertices.get(polygonVertices.size() - 1);
+        if (polygon.size() > 2) {
+            Polygon.Point first = polygon.getVertices().get(0);
+            Polygon.Point last = polygon.getVertices().get(polygon.size() - 1);
             drawLine(last.x, last.y, first.x, first.y);
             panel.repaint();
             System.out.println("=== POLYGON UZAVŘEN ===");
-            System.out.println("Počet vrcholů: " + polygonVertices.size());
+            System.out.println("Počet vrcholů: " + polygon.size());
 
             // NEMAŽEME vrcholy, pouze ukončíme kreslení
             drawing = false;
@@ -442,8 +432,8 @@ public class Controller2D {
     private void clearCanvas() {
         raster.clear();
         System.out.println("=== CLEAR CANVAS ===");
-        System.out.println("Počet vrcholů před vyčištěním: " + polygonVertices.size());
-        polygonVertices.clear();
+        System.out.println("Počet vrcholů před vyčištěním: " + polygon.size());
+        polygon.clear();
         drawing = false;
         editing = false;
         selectedVertex = null;
