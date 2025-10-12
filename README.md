@@ -1,183 +1,131 @@
-<<<<<<< HEAD
 # PGRF1 – Úloha 1: Čára, barevný přechod a n-úhelník
+
 **Autor:** Maksym Makedonskyi  
 **Rok:** 2025  
 **Jazyk:** Java 21
-=======
-# PGRF1 – Úloha 1: Čára, barevný přechod a n-úhelník  
-**Autor:** Maksym Makedonskyi  
-**Rok:** 2025  
-**Jazyk:** Java 21  
->>>>>>> ff8f59ae62e042a0f48cd3d46d8021be6f26bd4e
 
 ---
 
-## 🎯 Cíl úlohy
-Cílem bylo vytvořit jednoduchou aplikaci pro kreslení úseček a n-úhelníků do rastrového obrázku.  
-<<<<<<< HEAD
-Aplikace má umožňovat interaktivní práci myší, kreslení pružné čáry, vytváření vrcholů polygonu a práci s barevným přechodem (gradientem).
-=======
-Aplikace má umožňovat interaktivní práci myší, kreslení pružné čáry, vytváření vrcholů polygonu a práci s barevným přechodem (gradientem).  
->>>>>>> ff8f59ae62e042a0f48cd3d46d8021be6f26bd4e
+##  Cíl úlohy
+
+Cílem bylo vytvořit jednoduchou aplikaci pro kreslení úseček a n-úhelníků do rastrového obrázku. Aplikace umožňuje interaktivní práci myší, kreslení pružné čáry, vytváření vrcholů polygonu a práci s barevným přechodem (gradientem).
 
 ---
 
-## 🧩 Implementace
+##  Implementace
 
 ### Raster
-<<<<<<< HEAD
 - **Soubor:** `Raster.java`, `RasterBufferedImage.java`
-- Definuje rozhraní a implementaci rastru pomocí třídy `BufferedImage`.
-- Metody: `setPixel`, `getPixel`, `clear`, kontrola hranic.
+- Definuje rozhraní a implementaci rastru pomocí třídy `BufferedImage`
+- Metody: `setPixel`, `getPixel`, `clear`, kontrola hranic
 
 ### Line Rasterizers
 - **Soubor:** `LineRasterizer.java`, `LineRasterizerTrivial.java`, `FilledLineRasterizer.java`
-- Třída `LineRasterizerTrivial` – jednoduché vykreslování (triviální metoda).
-- Třída `FilledLineRasterizer` – implementuje **Bresenhamův algoritmus**.
-- Podporuje **barevný přechod (gradient)** mezi dvěma barvami.
+- Třída `LineRasterizerTrivial` – jednoduché vykreslování (triviální metoda)
+- Třída `FilledLineRasterizer` – implementuje **Bresenhamův algoritmus**
+- Podporuje **barevný přechod (gradient)** mezi dvěma barvami
 
 ### Polygon
 - **Soubor:** `Polygon.java`
-- Umožňuje přidávání, mazání a mazání všech vrcholů.
-- Vrcholy jsou ukládány v seznamu a kresleny jako uzavřený n-úhelník.
+- Umožňuje přidávání, mazání a mazání všech vrcholů
+- Vrcholy jsou ukládány v seznamu a kresleny jako uzavřený n-úhelník
 
 ### Controller
 - **Soubor:** `Controller2D.java`
-- Obsahuje hlavní logiku ovládání myší a klávesnicí.
-- Funkce:
-    - kreslení pružné čáry (natahovaná úsečka),
-    - přidávání vrcholů polygonu levým tlačítkem myši,
-    - úprava existujícího vrcholu pravým tlačítkem,
-    - přidání vrcholu na hranu pomocí **Alt + levé tlačítko**,
-    - režim **Shift** – zarovnání na vodorovnou/svislou/úhlopříčnou osu,
-    - klávesa **C** – vymazání obrazovky.
+- Obsahuje hlavní logiku ovládání myší a klávesnicí
+- **Funkce:**
+    - Kreslení pružné čáry (natahovaná úsečka)
+    - Přidávání vrcholů polygonu levým tlačítkem myši
+    - Úprava existujícího vrcholu pravým tlačítkem
+    - Přidání vrcholu na hranu pomocí **Alt + levé tlačítko**
+    - Režim **Shift** – zarovnání na vodorovnou/svislou/úhlopříčnou osu
+    - Klávesa **C** – vymazání obrazovky
+    - Klávesa **L** – přepínání mezi režimem čar a polygonů
 
 ### View
 - **Soubor:** `Panel.java`, `Window.java`
-=======
-- **Soubor:** `Raster.java`, `RasterBufferedImage.java`  
-- Definuje rozhraní a implementaci rastru pomocí třídy `BufferedImage`.  
-- Metody: `setPixel`, `getPixel`, `clear`, kontrola hranic.  
-
-### Line Rasterizers
-- **Soubor:** `LineRasterizer.java`, `LineRasterizerTrivial.java`, `FilledLineRasterizer.java`  
-- Třída `LineRasterizerTrivial` – jednoduché vykreslování (triviální metoda).  
-- Třída `FilledLineRasterizer` – implementuje **Bresenhamův algoritmus**.  
-- Podporuje **barevný přechod (gradient)** mezi dvěma barvami.  
-
-### Polygon
-- **Soubor:** `Polygon.java`  
-- Umožňuje přidávání, mazání a mazání všech vrcholů.  
-- Vrcholy jsou ukládány v seznamu a kresleny jako uzavřený n-úhelník.  
-
-### Controller
-- **Soubor:** `Controller2D.java`  
-- Obsahuje hlavní logiku ovládání myší a klávesnicí.  
-- Funkce:
-  - kreslení pružné čáry (natahovaná úsečka),
-  - přidávání vrcholů polygonu levým tlačítkem myši,
-  - úprava existujícího vrcholu pravým tlačítkem,
-  - přidání vrcholu na hranu pomocí **Alt + levé tlačítko**,
-  - režim **Shift** – zarovnání na vodorovnou/svislou/úhlopříčnou osu,
-  - klávesa **C** – vymazání obrazovky.  
-
-### View
-- **Soubor:** `Panel.java`, `Window.java`  
->>>>>>> ff8f59ae62e042a0f48cd3d46d8021be6f26bd4e
-- Zajišťují zobrazení rastrového obrázku a GUI okna.
+- Zajišťují zobrazení rastrového obrázku a GUI okna
 
 ---
 
-## 🎨 Barevný přechod
-Barevný přechod je implementován v `FilledLineRasterizer.rasterize(x1, y1, x2, y2, color1, color2)`  
-a zároveň dostupný v metodě `Controller2D.drawGradientLine`.  
-<<<<<<< HEAD
-Interpolace RGB probíhá lineárně podle délky úsečky.
-=======
-Interpolace RGB probíhá lineárně podle délky úsečky.  
->>>>>>> ff8f59ae62e042a0f48cd3d46d8021be6f26bd4e
+##  Barevný přechod
+
+Barevný přechod je implementován v `FilledLineRasterizer.rasterize(x1, y1, x2, y2, color1, color2)` a zároveň dostupný v metodě `Controller2D.drawGradientLine`. Interpolace RGB probíhá lineárně podle délky úsečky.
+
+**Barevný přechod:** Červená (0xFF0000) → Modrá (0x0000FF)
 
 ---
 
-## 🧮 Použitý algoritmus
-<<<<<<< HEAD
+##  Použitý algoritmus
+
 **Bresenhamův algoritmus**
-- Výhody:
-    - používá pouze celočíselné výpočty → rychlý,
-    - není potřeba pracovat s floaty nebo násobeními.
-- Nevýhody:
-    - nelze snadno kombinovat s antialiasingem,
-    - nutnost implementace zvlášť pro různé kvadranty.
-=======
-**Bresenhamův algoritmus**  
-- Výhody:
-  - používá pouze celočíselné výpočty → rychlý,
-  - není potřeba pracovat s floaty nebo násobeními.  
-- Nevýhody:
-  - nelze snadno kombinovat s antialiasingem,
-  - nutnost implementace zvlášť pro různé kvadranty.
->>>>>>> ff8f59ae62e042a0f48cd3d46d8021be6f26bd4e
+
+**Výhody:**
+- Používá pouze celočíselné výpočty → rychlý
+- Není potřeba pracovat s floaty nebo násobeními
+- Efektivita - nevyžaduje násobení ani dělení v hlavním cyklu
+
+**Nevýhody:**
+- Nelze snadno kombinovat s antialiasingem
+- Nutnost implementace zvlášť pro různé kvadranty
+- Složitější inicializace než u DDA algoritmu
 
 ---
 
-## 🕹️ Ovládání
+## ️ Ovládání
 
 | Akce | Popis |
-|------|--------|
+|------|-------|
 | **Levý klik + tažení** | Kreslení pružné úsečky |
 | **Shift + tažení** | Zarovnání čáry (vodorovně/svisle/úhlopříčně) |
 | **Alt + levý klik** | Přidání vrcholu na hranu polygonu |
-| **Pravý klik** | Úprava nejbližšího vrcholu |
+| **Pravý klik + tažení** | Úprava nejbližšího vrcholu |
+| **Ctrl + levý klik** | Smazání nejbližšího vrcholu |
 | **Klávesa C** | Vymazání celé plochy |
-| **Barevný režim (Gradient)** | Automaticky aktivní při kreslení úsečky |
+| **Klávesa G** | Přepnutí režimu gradientu |
+| **Klávesa L** | Přepnutí mezi režimem čar a polygonů |
+| **Klávesa R, B, Y, P** | Výběr barvy čáry (červená, modrá, žlutá, růžová) |
+| **Klávesa Space** | Uzavření polygonu |
+| **Klávesa Delete** | Smazání vybraného vrcholu |
 
 ---
 
-## 🧠 Bonusové funkce
-<<<<<<< HEAD
-- Přidávání vrcholu na nejbližší hranu (Alt + klik)
-- Úprava vrcholů myší
-- Barevný přechod mezi dvěma barvami
-- Režim Shift pro přesné úhly
-=======
-- Přidávání vrcholu na nejbližší hranu (Alt + klik)  
-- Úprava vrcholů myší  
-- Barevný přechod mezi dvěma barvami  
-- Režim Shift pro přesné úhly  
->>>>>>> ff8f59ae62e042a0f48cd3d46d8021be6f26bd4e
+##  Bonusové funkce
+
+- ✅ Přidávání vrcholu na nejbližší hranu (Alt + klik)
+- ✅ Úprava vrcholů myší (pravý klik + tažení)
+- ✅ Mazání vrcholů (Ctrl + klik)
+- ✅ Barevný přechod mezi dvěma barvami
+- ✅ Režim Shift pro přesné úhly
+- ✅ Uzavírání polygonu (Space)
+- ✅ Výběr barev pro kreslení
+- ✅ Režim pro kreslení jednotlivých čar (L)
 
 ---
 
-## ▶️ Spuštění
-<<<<<<< HEAD
-1. Otevřete projekt v **IntelliJ IDEA** nebo jiném IDE.
-2. Ujistěte se, že používáte JDK 21+.
-3. Spusťte soubor `src/Main.java`.
-=======
-1. Otevřete projekt v **IntelliJ IDEA** nebo jiném IDE.  
-2. Ujistěte se, že používáte JDK 21+.  
-3. Spusťte soubor `src/Main.java`.  
->>>>>>> ff8f59ae62e042a0f48cd3d46d8021be6f26bd4e
-4. Otevře se okno s kreslicí plochou.
+##  Spuštění
+
+1. Otevřete projekt v **IntelliJ IDEA** nebo jiném IDE
+2. Ujistěte se, že používáte **JDK 21+**
+3. Spusťte soubor `src/view/Main.java`
+4. Otevře se okno s kreslicí plochou 800x600 pixelů
 
 ---
 
-## 📁 Struktura projektu
+##  Struktura projektu
 src/
-├── rasterize/
+├── controller/ # Řízení událostí myši a klávesnice
+│ └── Controller2D.java
+├── rasterize/ # Algoritmy rasterizace a datové struktury
+│ ├── Point.java
+│ ├── Polygon.java
 │ ├── Raster.java
 │ ├── RasterBufferedImage.java
 │ ├── LineRasterizer.java
-│ ├── LineRasterizerTrivial.java
 │ ├── FilledLineRasterizer.java
-│ └── Polygon.java
-├── controller/
-│ └── Controller2D.java
-├── view/
-│ ├── Panel.java
-│ └── Window.java
-<<<<<<< HEAD
+│ ├── LineRasterizerTrivial.java
+│ └── LineRasterizerGraphics.java
+└── view/ # Uživatelské rozhraní
+│    ├──Panel.java
+│    ├──Window.java
 └── Main.java
-=======
-└── Main.java
->>>>>>> ff8f59ae62e042a0f48cd3d46d8021be6f26bd4e
