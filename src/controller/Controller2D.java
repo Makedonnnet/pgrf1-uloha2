@@ -33,6 +33,9 @@ public class Controller2D {
     private Point selectedVertex = null; // Vybraný vrchol pro editaci
     private boolean editing = false; // Režim editace
 
+    // Nová proměnná pro režim kreslení
+    private boolean lineMode = false; // true = kreslení jednotlivých úseček, false = polygon
+
     public Controller2D(Panel panel) {
         this.panel = panel;
         this.raster = panel.getRaster();
@@ -70,7 +73,7 @@ public class Controller2D {
                     }
                     else if (e.isAltDown()) { // Alt + levé tlačítko - přidání vrcholu na hranu
                         System.out.println("Alt + levé tlačítko - pokus o přidání vrcholu na hranu");
-                        if (!drawing) {
+                        if (!drawing && !lineMode) {
                             int edgeIndex = findNearestEdge(e.getX(), e.getY());
                             if (edgeIndex != -1) {
                                 // Vložit nový vrchol na nalezenou hranu
@@ -92,10 +95,15 @@ public class Controller2D {
                             startY = e.getY();
                             drawing = true;
 
-                            // Přidat vrchol do polygonu
-                            polygon.addVertex(startX, startY);
-                            System.out.println("=== PŘIDÁN PRVNÍ VRCHOL: [" + startX + ", " + startY + "] ===");
-                            System.out.println("Počet vrcholů: " + polygon.size());
+                            if (lineMode) {
+                                // Režim jednotlivých úseček - nepřidáváme do polygonu
+                                System.out.println("=== ZAČÁTEK KRESLENÍ ÚSEČKY ===");
+                            } else {
+                                // Režim polygonu - přidáme vrchol
+                                polygon.addVertex(startX, startY);
+                                System.out.println("=== PŘIDÁN PRVNÍ VRCHOL: [" + startX + ", " + startY + "] ===");
+                                System.out.println("Počet vrcholů: " + polygon.size());
+                            }
                         } else if (drawing && !editing) {
                             // Konec kreslení - potvrdit úsečku
                             int endX = e.getX();
@@ -111,20 +119,26 @@ public class Controller2D {
                             // Vykreslit finální úsečku
                             drawLine(startX, startY, endX, endY);
 
-                            // Přidat další vrchol polygonu
-                            polygon.addVertex(endX, endY);
-                            System.out.println("=== PŘIDÁN DALŠÍ VRCHOL: [" + endX + ", " + endY + "] ===");
-                            System.out.println("Počet vrcholů: " + polygon.size());
+                            if (lineMode) {
+                                // Režim jednotlivých úseček - dokončit kreslení
+                                drawing = false;
+                                System.out.println("=== ÚSEČKA DOKONČENA ===");
+                            } else {
+                                // Režim polygonu - přidat další vrchol
+                                polygon.addVertex(endX, endY);
+                                System.out.println("=== PŘIDÁN DALŠÍ VRCHOL: [" + endX + ", " + endY + "] ===");
+                                System.out.println("Počet vrcholů: " + polygon.size());
 
-                            // Připravit se na další úsečku
-                            startX = endX;
-                            startY = endY;
+                                // Připravit se na další úsečku
+                                startX = endX;
+                                startY = endY;
+                            }
                         }
                     }
                     panel.repaint();
                 }
                 else if (e.getButton() == MouseEvent.BUTTON3) { // Pravá myš - editace
-                    if (!drawing) {
+                    if (!drawing && !lineMode) {
                         // Hledání nejbližšího vrcholu
                         selectedVertex = findNearestVertex(e.getX(), e.getY());
                         if (selectedVertex != null) {
@@ -154,8 +168,10 @@ public class Controller2D {
                     // "Pružná" čára - dočasné vykreslení
                     raster.clear();
 
-                    // Vykreslit již potvrzené úsečky polygonu
-                    drawPolygon();
+                    // Vykreslit již potvrzené úsečky polygonu (pouze v režimu polygonu)
+                    if (!lineMode) {
+                        drawPolygon();
+                    }
 
                     // Vykreslit aktuální "pružnou" úsečku
                     int currentX = e.getX();
@@ -211,6 +227,14 @@ public class Controller2D {
                     panel.repaint();
                 }
 
+                if (e.getKeyCode() == KeyEvent.VK_L) {
+                    // Přepnutí režimu kreslení (L jako Line)
+                    lineMode = !lineMode;
+                    drawing = false; // Reset kreslení při změně režimu
+                    System.out.println("Line mode: " + (lineMode ? "ON - kreslení jednotlivých úseček" : "OFF - kreslení polygonu"));
+                    panel.repaint();
+                }
+
                 // Výběr barev pro normální režim
                 if (e.getKeyCode() == KeyEvent.VK_R) {
                     lineRasterizer.setColor(Color.RED);
@@ -229,13 +253,13 @@ public class Controller2D {
                     System.out.println("Color: PINK");
                 }
 
-                // Uzavření polygonu - např. mezerník
-                if (e.getKeyCode() == KeyEvent.VK_SPACE && polygon.size() > 2) {
+                // Uzavření polygonu - např. mezerník (pouze v režimu polygonu)
+                if (e.getKeyCode() == KeyEvent.VK_SPACE && polygon.size() > 2 && !lineMode) {
                     closePolygon();
                 }
 
-                // Mazání vybraného vrcholu - klávesa Delete nebo Backspace
-                if ((e.getKeyCode() == KeyEvent.VK_DELETE || e.getKeyCode() == KeyEvent.VK_BACK_SPACE) && selectedVertex != null) {
+                // Mazání vybraného vrcholu - klávesa Delete nebo Backspace (pouze v režimu polygonu)
+                if ((e.getKeyCode() == KeyEvent.VK_DELETE || e.getKeyCode() == KeyEvent.VK_BACK_SPACE) && selectedVertex != null && !lineMode) {
                     System.out.println("Delete/Backspace klávesa - pokus o mazání vybraného vrcholu");
                     polygon.getVertices().remove(selectedVertex);
                     raster.clear();
